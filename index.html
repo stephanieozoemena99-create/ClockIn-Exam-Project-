@@ -1,1 +1,247 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  CLOCKIN
+  EMCICT311 Mini Project, Topic 8: Attendance Register
 
+  FILE:   index.html
+  LAYER:  4 of 4, the surface. Structure only.
+  OWNER:  M2
+
+  This file contains NO styling and NO logic. It is the skeleton
+  that css/styles.css dresses and that js/app.js brings to life.
+
+  ------------------------------------------------------------
+  THE ID CONTRACT
+  Every id below is a hook the JavaScript reaches for by name.
+  If you rename one here, app.js stops finding it and the app
+  breaks silently. Treat these fourteen names as fixed.
+
+    #addForm        the add-a-student form
+    #nameInput      where the new name is typed
+    #addBtn         the add button
+    #message        the one place every error appears
+    #countTotal     live number: students in the register
+    #countPresent   live number: students marked present
+    #countAbsent    live number: students marked absent
+    #searchInput    the search box
+    #studentList    the list container app.js wipes and refills
+    #emptyState     shown when the register has no students
+    #noResults      shown when a search matches nothing
+    #lectureDate    today's date in the header
+
+  DATA ATTRIBUTES
+    data-id         which student a button belongs to
+    data-action     what the button does: present | absent |
+                    edit | delete | save | cancel
+
+  Buttons carry data-id rather than a position number, because
+  positions shift when a student is deleted. The id never moves.
+  ============================================================
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClockIn</title>
+
+  <!-- The only stylesheet. Everything visual lives in this one file. -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+<main class="app" id="app">
+
+  <!-- ========================================================
+       HEADER
+       Identifies the lecture. The date is written by app.js on
+       startup so the register always shows today.
+       ======================================================== -->
+  <header class="app-bar">
+    <h1 class="app-title">ClockIn</h1>
+    <p class="app-meta">EMCICT311 &middot; <span id="lectureDate">Loading date</span></p>
+  </header>
+
+  <!-- ========================================================
+       ZONE 1: ADD A STUDENT
+       Requirement: Add student names (3 marks)
+
+       This is a <form> on purpose. A form gives us the Enter key
+       for free, so the lecturer can type a name, press Enter, and
+       keep typing without reaching for the mouse. app.js calls
+       preventDefault() so the page never reloads.
+       ======================================================== -->
+  <section class="zone zone--add">
+    <form class="field-row" id="addForm">
+      <label class="visually-hidden" for="nameInput">Student name</label>
+      <input
+        class="text-input"
+        id="nameInput"
+        type="text"
+        placeholder="Type a student name"
+        autocomplete="off">
+      <button class="btn btn--primary" id="addBtn" type="submit">Add student</button>
+    </form>
+  </section>
+
+  <!-- ========================================================
+       ZONE 2: MESSAGE
+       Section 4: input validation and error handling (2 marks)
+
+       Every error in the whole application appears here and
+       nowhere else. It stays in the layout at all times, hidden
+       by the .is-hidden class, so showing a message never pushes
+       the rest of the page around.
+       ======================================================== -->
+  <section class="zone zone--message">
+    <p class="message is-hidden" id="message" role="status" aria-live="polite"></p>
+  </section>
+
+  <!-- ========================================================
+       ZONE 3: COUNTERS
+       Requirements: count total present (3), count total absent (3)
+
+       These three numbers are never stored. app.js recalculates
+       them from the students array on every single render, which
+       is why they can never disagree with the list below.
+       ======================================================== -->
+  <section class="zone zone--stats">
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-value" id="countTotal">0</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat stat--present">
+        <span class="stat-value" id="countPresent">0</span>
+        <span class="stat-label">Present</span>
+      </div>
+      <div class="stat stat--absent">
+        <span class="stat-value" id="countAbsent">0</span>
+        <span class="stat-label">Absent</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       ZONE 4: SEARCH
+       Requirement: Search student names (3 marks)
+
+       Sits directly above the list because it controls the list.
+       It filters a copy of the data and never saves anything.
+       ======================================================== -->
+  <section class="zone zone--search">
+    <label class="visually-hidden" for="searchInput">Search student names</label>
+    <input
+      class="text-input"
+      id="searchInput"
+      type="search"
+      placeholder="Search student names"
+      autocomplete="off">
+  </section>
+
+  <!-- ========================================================
+       ZONE 5: THE LIST
+       Requirements: display attendance list (3),
+                     mark Present / Absent (6),
+                     edit attendance record (3)
+
+       IMPORTANT FOR WHOEVER WRITES THE CSS:
+       The three rows below are SAMPLE MARKUP. app.js deletes
+       them on startup and generates rows in exactly this shape.
+       They exist so the list can be styled before the JavaScript
+       is written. Do not change their classes or their nesting.
+
+       Three states are shown on purpose so all of them get
+       styled: present, absent, and unmarked. The fourth row
+       shows a student mid-edit.
+       ======================================================== -->
+  <section class="zone zone--list">
+    <ul class="student-list" id="studentList">
+
+      <!-- STATE 1: marked present -->
+      <li class="student-row" data-id="sample-1">
+        <span class="badge badge--present">Present</span>
+        <span class="student-name">Amaka Obi</span>
+        <div class="row-actions">
+          <button class="btn-mini btn-mini--present" data-action="present" data-id="sample-1">Present</button>
+          <button class="btn-mini btn-mini--absent"  data-action="absent"  data-id="sample-1">Absent</button>
+          <button class="btn-mini btn-mini--edit"    data-action="edit"    data-id="sample-1">Edit</button>
+          <button class="btn-mini btn-mini--delete"  data-action="delete"  data-id="sample-1">Delete</button>
+        </div>
+      </li>
+
+      <!-- STATE 2: marked absent -->
+      <li class="student-row" data-id="sample-2">
+        <span class="badge badge--absent">Absent</span>
+        <span class="student-name">Tunde Bakare</span>
+        <div class="row-actions">
+          <button class="btn-mini btn-mini--present" data-action="present" data-id="sample-2">Present</button>
+          <button class="btn-mini btn-mini--absent"  data-action="absent"  data-id="sample-2">Absent</button>
+          <button class="btn-mini btn-mini--edit"    data-action="edit"    data-id="sample-2">Edit</button>
+          <button class="btn-mini btn-mini--delete"  data-action="delete"  data-id="sample-2">Delete</button>
+        </div>
+      </li>
+
+      <!-- STATE 3: not marked yet. Deliberately its own state, so
+           the register never accuses a student of being absent
+           before the lecturer has reached their name. -->
+      <li class="student-row" data-id="sample-3">
+        <span class="badge badge--unmarked">Unmarked</span>
+        <span class="student-name">Chidinma Eze</span>
+        <div class="row-actions">
+          <button class="btn-mini btn-mini--present" data-action="present" data-id="sample-3">Present</button>
+          <button class="btn-mini btn-mini--absent"  data-action="absent"  data-id="sample-3">Absent</button>
+          <button class="btn-mini btn-mini--edit"    data-action="edit"    data-id="sample-3">Edit</button>
+          <button class="btn-mini btn-mini--delete"  data-action="delete"  data-id="sample-3">Delete</button>
+        </div>
+      </li>
+
+      <!-- STATE 4: this row is being edited. The name has been
+           swapped for a text box, and the four action buttons
+           have been replaced by Save and Cancel. Only one row is
+           ever in this state at a time. -->
+      <li class="student-row student-row--editing" data-id="sample-4">
+        <label class="visually-hidden" for="editInput-sample-4">Edit student name</label>
+        <input class="edit-input" id="editInput-sample-4" type="text" value="Ibrahim Sule">
+        <div class="row-actions">
+          <button class="btn-mini btn-mini--save"   data-action="save"   data-id="sample-4">Save</button>
+          <button class="btn-mini btn-mini--cancel" data-action="cancel" data-id="sample-4">Cancel</button>
+        </div>
+      </li>
+
+    </ul>
+
+    <!-- ZONE 6: EMPTY STATE
+         Replaces the list when the register has no students, so a
+         first-time user is never met with a blank rectangle. -->
+    <p class="empty-state is-hidden" id="emptyState">
+      No students added yet. Type a name above to begin.
+    </p>
+
+    <!-- Shown when a search matches nothing. Separate from the
+         empty state above, because "you have no students" and
+         "nobody matches that search" are different situations. -->
+    <p class="empty-state is-hidden" id="noResults">
+      No student matches that name.
+    </p>
+  </section>
+
+</main>
+
+<!--
+  ============================================================
+  SCRIPTS
+  The order is not optional. Each file uses the ones above it,
+  so loading them out of order breaks the application.
+
+  They sit at the bottom of <body> so that all the HTML above
+  already exists by the time the JavaScript goes looking for it.
+  ============================================================
+-->
+<script src="js/student.js"></script>   <!-- defines the Student class -->
+<script src="js/register.js"></script>  <!-- uses Student, holds all the rules -->
+<script src="js/storage.js"></script>   <!-- uses Student, saves and loads -->
+<script src="js/app.js"></script>       <!-- uses everything, starts the app -->
+
+</body>
+</html>
